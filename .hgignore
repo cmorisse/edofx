@@ -4,6 +4,8 @@ syntax: glob
 *.bak
 *.pyc
 *.DS_Store
+CA*.ofx
+compte_*
 .project
 .pydevproject
 .settings/
