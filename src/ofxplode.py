@@ -71,6 +71,7 @@ def main(source_file):
         
 
 if __name__ == '__main__':
+    # TODO:  add an option for CA files
     
     usage = "usage: %prog ofx_source_filename"
     parser = OptionParser(usage, version=__version__)
