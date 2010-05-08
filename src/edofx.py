@@ -1,6 +1,6 @@
 # coding: utf-8
 #
-# Copyright (c) 2010 <Cyril MORISSE - cyril.morisse@gmail.com>
+# Copyright (c) 2010 <Cyril MORISSE - cmorisse@boxes3.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of 
 # this software and associated documentation files (the "Software"), to deal in 
@@ -24,7 +24,7 @@ edofx is a library and a DSL to manipulate (mainly read) OFX files.
 
 Created on 28 févr. 2010
 
-@author: Cyril MORISSE - cyril.morisse@gmail.com
+@author: Cyril MORISSE - cmorisse@boxes3.net
 
 '''
 import logging
@@ -48,10 +48,12 @@ from datetime import date
 # parser pipeline
 # first parse everything as OFX
 #
+
+__version__ = "edofx v0.2 - mai 2010" 
     
 class OFXNode(object):
     '''
-    Use as a generic way to store file content
+    Used to represent OFX Trees
     '''
     TYPE_UNDEFINED  = 0
     TYPE_OPENING    = 1
@@ -136,7 +138,7 @@ class OFXNode(object):
         if self.name[:2] == 'DT' :
             return date( int(self.value[:4]), int(self.value[4:6]), int(self.value[6:8]) ) 
         elif self.name[-3:] == 'AMT' :
-            return float(self.value)
+            return float(self.value.replace(',','.'))
         return self.value
     val = property(__val)
          
@@ -400,7 +402,6 @@ class OFXParser(object):
 
 
     def __parse(self):
-        
         tag = self.__read_tag()
         if tag.type == tag.TYPE_CLOSING :
             return None
@@ -435,7 +436,7 @@ class OFXParser(object):
         '''
         Parse OFX source and returns an OFXNode tree
         
-        return None if source is undefined.
+        returns None if source is undefined.
         '''
         if not self.ready:
             return None
