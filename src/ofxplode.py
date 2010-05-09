@@ -35,8 +35,11 @@ def main(source_file):
     o = p.parse()
     
     # on vire les infos sur les cartes de crédits
-    del o.CREDITCARDMSGSRSV1
-
+    try:
+        del o.CREDITCARDMSGSRSV1
+    except:
+        pass    
+    
     # first we backup all account information
     account_list = list() 
     for e in o.BANKMSGSRSV1.STMTTRNRS:
