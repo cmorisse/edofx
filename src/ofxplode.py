@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 # coding: utf8
 #
 # Copyright (C) 2010 Cyril MORISSE <cmorisse@boxes3.net>
