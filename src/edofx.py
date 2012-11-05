@@ -49,7 +49,7 @@ from datetime import date
 # first parse everything as OFX
 #
 
-__version__ = "edofx v0.2 - mai 2010" 
+__version__ = "edofx v0.3 - novembre 2012"
     
 class OFXNode(object):
     '''
