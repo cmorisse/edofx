@@ -44,11 +44,11 @@ class AcceptanceTests(unittest.TestCase):
         pass
 
     def test_01_obfuscate_real_file(self):
-        obfuscator = OFXObfuscator(open(self.path+'real_file.ofx').read())
+        obfuscator = OFXObfuscator(open(self.path+'real_file_no_headers.ofx').read())
         ofx = obfuscator.obfuscate()        
 
     def test_02_obfuscate_real_file_and_save_as_ofx(self):
-        obfuscator = OFXObfuscator(open(self.path+'real_file.ofx').read())
+        obfuscator = OFXObfuscator(open(self.path+'real_file_no_headers.ofx').read())
         ofx = obfuscator.obfuscate()        
 
         f = open('output/real_file_obfuscated.ofx','w')

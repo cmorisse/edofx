@@ -36,7 +36,7 @@ class AcceptanceTests(unittest.TestCase):
         '''
         Parse a real file
         '''
-        parser = OFXParser(open(self.path+'real_file.ofx').read())
+        parser = OFXParser(open(self.path+'real_file_no_headers.ofx').read())
         ofx_tree = parser.parse()
         
         print ofx_tree.ofx_repr()
@@ -45,7 +45,7 @@ class AcceptanceTests(unittest.TestCase):
         '''
         Parse a real file
         '''
-        parser = OFXParser(open(self.path+'real_file.ofx').read())
+        parser = OFXParser(open(self.path+'real_file_no_headers.ofx').read())
         ofx_tree = parser.parse()
         
         print ofx_tree.xml_repr()
@@ -54,7 +54,7 @@ class AcceptanceTests(unittest.TestCase):
         '''
         Parse a real file
         '''
-        parser = OFXParser(open(self.path+'real_file.ofx').read())
+        parser = OFXParser(open(self.path+'real_file_no_headers.ofx').read())
         OFX = parser.parse()
         sl = render_as_DOT(OFX)
         print
@@ -85,7 +85,7 @@ class AcceptanceTests(unittest.TestCase):
         On Windows, we may have CR/LF differences. 
         
         '''
-        src = open(self.path+'real_file.ofx')
+        src = open(self.path+'real_file_no_headers.ofx')
         parser = OFXParser(src.read())
         src.close()
         

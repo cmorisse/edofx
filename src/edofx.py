@@ -71,7 +71,7 @@ class OFXNode(object):
         self.__iter_src__=[]
     
     def __get_nodes_chain(self):
-        if self.parent == None :
+        if self.parent is None:
             return self.name
         return self.parent.__get_nodes_chain()+'.'+self.name
     
@@ -251,6 +251,7 @@ class OFXParser(object):
         self.current_char        = None
         self.current_line_number = 1
         self.OFX_tree            = None
+        self.OFX_headers         = None
         
     def __read_char(self):
         '''
@@ -263,6 +264,12 @@ class OFXParser(object):
             return ''
         
         self.current_char = self.source[self.source_idx]
+
+        if self.source_idx+1 < self.source_len:
+            self.next_char = self.source[self.source_idx]
+        else:
+            self.next_char=''
+
         self.source_idx+=1
         
         if self.current_char == '\n' :
@@ -280,6 +287,7 @@ class OFXParser(object):
         '''
         self.source_idx-=1
         self.__EOF=False
+        self.next_char = self.current_char
         self.current_char = self.source[self.source_idx]            
         return self.current_char
 
@@ -290,7 +298,7 @@ class OFXParser(object):
         '''
         c = self.__read_char()
         tmp_name = first_char
-        while(c<>'' and c<>'>'):
+        while c<>'' and c<>'>':
             tmp_name += c
             c = self.__read_char()
         
@@ -335,26 +343,25 @@ class OFXParser(object):
         return None # should never pass here
 
     def __read_tag(self):
-        '''
+        """
         parse current file and return one tag.
         
         returns:
             None when EOF is reached
             Tag with type = TYPE_ERROR if line is malformed
-        '''
+        """
                 
-        #current_tag = Tag()
         current_tag = OFXNode()
 
         c = self.__read_char()
 
-        if(c=='<'):
+        if c == '<' :
             c = self.__read_char()
-            if( c==''):
+            if( c=='' ):
                 current_tag.type = OFXNode.TYPE_ERROR
                 return current_tag
 
-            if( c=='/'):    # CLOSING TAG
+            if( c=='/' ):    # CLOSING TAG
                 current_tag.type = OFXNode.TYPE_CLOSING
                 current_tag.name = self.__read_tag_name()  
             else:           # OPENING or SELF_CLOSING TAG
@@ -389,7 +396,7 @@ class OFXParser(object):
 
             if value :
                 current_tag.type = OFXNode.TYPE_SELFCLOSING
-                if tmp_value[-1]=='\n' and tmp_value[-2]=='\r': # PC end of line
+                if tmp_value[-1]=='\n' and tmp_value[-2]=='\r': # Windows style end of line
                     current_tag.value = tmp_value[:-2]  
                 elif tmp_value[-1] == '\n' :                    # Unix style end of line
                     current_tag.value = tmp_value[:-1]
@@ -401,52 +408,96 @@ class OFXParser(object):
             return current_tag
 
 
-    def __parse(self):
+    def __read_header_line(self):
+        """
+        Parse current line and return a tuple if it's a header
+
+        returns:
+            None when EOF is reached
+            ( header, header_value) if line is a header
+        """
+
+        c = self.__read_char()
+        if c == '<':  # headers can't start with <, this is a tag
+            self.__reject_char()
+            return None
+
+        line = ''
+        while c != '\n':
+            line += c
+            c = self.__read_char()
+
+        return line.split(':')
+
+
+    # We parse headers and returns them
+    def __parse_headers(self):
+
+        headers_dict = {}
+        h = self.__read_header_line()
+        while h is not None:
+            headers_dict[h[0]]=h[1]
+            h = self.__read_header_line()
+        return headers_dict
+
+
+    def __parse_content(self):
         tag = self.__read_tag()
+        if tag is None:
+            pass
+
         if tag.type == tag.TYPE_CLOSING :
             return None
 
         if tag.type == tag.TYPE_SELFCLOSING :
             return tag
-        
-        child = self.__parse()
-        while child <> None :
+
+        child = self.__parse_content()
+        while child is not None:
             tag.children.append( child )
-            child = self.__parse()
-        
+            child = self.__parse_content()
+
+        self.logger.debug(tag)
         return tag
 
-    def set_source(self, source):
-        
-        if len(source) < 10:
-            self.logger.error("Supplied source string is null")
-            self.ready = False
-            self.src = ''
 
-        self.source              = source
-        self.source_idx          = 0
-        self.source_len          = len(source)
-        self.ready               = True
-        self.__EOF               = False
-        self.current_char        = None
-        self.current_line_number = 1
-        self.OFX_tree            = None
-    
-    def parse(self):
-        '''
-        Parse OFX source and returns an OFXNode tree
-        
-        returns None if source is undefined.
-        '''
+    def parse_headers(self):
+        """
+        Parse headers only and set parser ready to parse content.
+        This is useful if you want to check header before reopening the file
+        with another encoding for example.
+
+        returns a dict of headers or None if the file contains no headers or parser is not ready.
+        """
         if not self.ready:
             return None
 
-        if self.OFX_tree <> None: 
-            return self.OFX_tree
+        if self.OFX_headers is None:
+            self.OFX_headers = self.__parse_headers()
+
+        return self.OFX_headers
+
+
+    def parse(self):
+        """
+        Parse OFX source and returns an OFXNode tree
         
-        self.OFX_tree = self.__parse()
+        returns None if source is undefined.
+        """
+        if not self.ready:
+            return None
+
+        if self.OFX_headers is None:
+            self.OFX_headers = self.__parse_headers()
+
+        if self.OFX_tree is not None:
+            return self.OFX_tree
+
+        self.OFX_tree = self.__parse_content()
 
         return self.OFX_tree
+
+
 
 class OFXObfuscator(object):
     '''

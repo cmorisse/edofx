@@ -35,7 +35,7 @@ class AcceptanceTests(unittest.TestCase):
         pass
         
   
-    def test_01_empty_csv_file(self):
+    def test_01_empty_ofx_file(self):
         parser = OFXParser(open(self.path+'empty.ofx').read())
         self.assertTrue(self.logging_handler.last_message.__contains__("Supplied source string is null"))
 
@@ -67,11 +67,11 @@ class AcceptanceTests(unittest.TestCase):
         self.assertTrue(tag.name=='CODE')
         self.assertTrue(tag.value=='this is a value with 1 number and 2 special chars :(')
  
-    def test_05_file_structure(self):
-        '''
+    def test_05_real_ofx_content(self):
+        """
         Parse a basic set of tokens
-        '''
-        parser = OFXParser(open(self.path+'real_file.ofx').read())
+        """
+        parser = OFXParser(open(self.path+'real_file_no_headers.ofx').read())
         OFX = parser.parse()
         try:
             print OFX.BANKMSGSRSV1.notag
@@ -82,18 +82,54 @@ class AcceptanceTests(unittest.TestCase):
 
 
     def test_06_parse_real_file_as_token_list(self):
-        '''
+        """
         Parse a real file
-        '''
-        return
-    
-    
-        parser = OFXParser(open(self.path+'real_file.ofx').read())
+        """
+        parser = OFXParser(open(self.path+'real_file_no_headers.ofx').read())
         print
         tag = parser._OFXParser__read_tag()
-        while (tag <> None ):
+        while tag is not None:
             print "%-20s|%-20s|%s " % (tag.get_type_name(), tag.name, tag.value )
             tag = parser._OFXParser__read_tag()
+
+
+    def test_07_parse_ofx_headers_only(self):
+        """
+        Parse a real file and extract headers
+        """
+        parser = OFXParser(open(self.path+'real_file_with_headers.ofx','U').read())
+        parser.parse_headers()
+        print "\nTest 7: Dumping headers:"
+        for h in parser.OFX_headers.items():
+            print "-",h
+        self.assertTrue(parser.OFX_headers['VERSION']=='102')
+        self.assertTrue(parser.OFX_headers['CHARSET']=='1252')
+
+
+    def test_08_parse_ofx_headers_then_content(self):
+        """
+        Open a real file, parse headers, then content
+        """
+        parser = OFXParser(open(self.path+'real_file_with_headers.ofx','U').read())
+        parser.parse_headers()
+        OFX = parser.parse()
+        print "\nTest 8: parse headers then content:"
+        self.assertTrue(parser.OFX_headers['VERSION']=='102')
+        self.assertTrue(parser.OFX_headers['CHARSET']=='1252')
+        self.assertTrue( OFX.BANKMSGSRSV1.STMTTRNRS.TRNUID.val == '41425367824' )
+
+
+    def test_09_parse_then_inspect_headers_then_content(self):
+        """
+        Open a real file, parse it, then inspect headers, then content
+        """
+        parser = OFXParser(open(self.path+'real_file_with_headers.ofx','U').read())
+        OFX = parser.parse()
+        print "\nTest 9: parse then inspect headers and content:"
+        self.assertTrue(parser.OFX_headers['VERSION']=='102')
+        self.assertTrue(parser.OFX_headers['CHARSET']=='1252')
+        self.assertTrue( OFX.BANKMSGSRSV1.STMTTRNRS.TRNUID.val == '41425367824' )
+
 
 
 if __name__=="__main__":
